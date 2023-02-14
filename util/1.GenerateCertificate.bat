@@ -22,6 +22,10 @@ rem SSL
 set OPENSSL_CONF=%ApachePath%\conf\openssl.cnf
 set OpenSslCommand=%ApachePath%\bin\openssl.exe
 
+rem ###################################################################################
+rem Java
+set JavaKeytoolCommand=keytool.exe
+
 rem Generate RootCA Certificate
 set RootCAKey=%OutputPath%\%RootCAName%.key
 set RootCACertificate=%OutputPath%\%RootCAName%.crt
@@ -40,6 +44,7 @@ set DomainCertifcateRequest=%OutputPath%\%DomainName%.csr
 set DomainCertifcateExtension=%OutputPath%\%DomainName%.ext
 set DomainCertifcate=%OutputPath%\%DomainName%.crt
 set DomainPkcs12Keystore=%OutputPath%\%DomainName%.p12
+set DomainJavaKeystore=%OutputPath%\%DomainName%.jks
 
 echo authorityKeyIdentifier=keyid,issuer > "%DomainCertifcateExtension%"
 echo basicConstraints=CA:FALSE >> "%DomainCertifcateExtension%"
@@ -60,6 +65,12 @@ if exist %DomainPkcs12Keystore% (
     echo DomainPkcs12Keystore file exist. Skip DomainPkcs12Keystore file generation.
 ) else (
     "%OpenSSLCommand%" pkcs12 -export -in "%DomainCertifcate%" -inkey "%DomainKey%" -out "%DomainPkcs12Keystore%" -name %DomainName%
+)
+
+if exist %DomainJavaKeystore% (
+    echo DomainJavaKeystore file exist. Skip DomainJavaKeystore file generation.
+) else (
+    "%JavaKeytoolCommand%" -importkeystore -srcstoretype PKCS12 -srckeystore "%DomainPkcs12Keystore%" -srcalias %DomainName% -srcstorepass "" -deststoretype JKS -destkeystore "%DomainJavaKeystore%" -destalias %DomainName% -deststorepass changeit -destkeypass changeit
 )
 
 echo Done.
